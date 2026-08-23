@@ -1,0 +1,8 @@
+{
+  "name": "StayDriven",
+  "description": "Browse the full archive of StayDriven AI briefs, prompts, slides, and community resources.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

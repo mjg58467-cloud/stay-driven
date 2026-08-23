@@ -1,0 +1,980 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>StayDriven CMS | Admin Control Center</title>
+    <meta name="description" content="Internal Admin CMS for managing StayDriven AI briefs, updates, guides, analytics, and PDF resources.">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="apple-touch-icon" href="/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="admin.css">
+  </head>
+  <body>
+    <div class="admin-app" id="adminApp">
+      <!-- Floating Icon-Only Sidebar (Reference 1 Layout) -->
+      <aside class="floating-sidebar" id="adminSidebar">
+        <a href="#dashboard" class="sidebar-brand-icon" title="StayDriven Admin" aria-label="StayDriven Admin">
+          <img src="/src/assets/logo.png" alt="StayDriven" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;">
+        </a>
+
+        <nav class="sidebar-nav" aria-label="Admin Navigation">
+          <button type="button" class="nav-icon-btn active" data-route="dashboard" aria-label="Dashboard">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7" rx="2" />
+              <rect x="14" y="3" width="7" height="7" rx="2" />
+              <rect x="14" y="14" width="7" height="7" rx="2" />
+              <rect x="3" y="14" width="7" height="7" rx="2" />
+            </svg>
+            <span class="tooltip">Dashboard</span>
+          </button>
+
+          <button type="button" class="nav-icon-btn" data-route="analytics" aria-label="Analytics & Engagement">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 20V10" />
+              <path d="M12 20V4" />
+              <path d="M6 20v-6" />
+            </svg>
+            <span class="tooltip">Analytics & Traffic</span>
+          </button>
+
+          <button type="button" class="nav-icon-btn" data-route="updates" aria-label="All Updates">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+              <polyline points="10 9 9 9 8 9" />
+            </svg>
+            <span class="tooltip">All Updates</span>
+          </button>
+
+          <button type="button" class="nav-icon-btn" data-route="editor" aria-label="New Update">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="16" />
+              <line x1="8" y1="12" x2="16" y2="12" />
+            </svg>
+            <span class="tooltip">New Update</span>
+          </button>
+
+          <button type="button" class="nav-icon-btn" data-route="media" aria-label="Media & PDFs">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+            </svg>
+            <span class="tooltip">PDFs & Resources</span>
+          </button>
+
+          <button type="button" class="nav-icon-btn" data-route="settings" aria-label="Settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+            <span class="tooltip">Settings & Backup</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-bottom">
+          <a href="/" target="_blank" class="nav-icon-btn" title="View Public Website" aria-label="View Public Website">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              <polyline points="15 3 21 3 21 9" />
+              <line x1="10" y1="14" x2="21" y2="3" />
+            </svg>
+            <span class="tooltip">View Live Site ↗</span>
+          </a>
+
+          <button type="button" class="nav-icon-btn" id="logoutBtn" aria-label="Sign Out">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            <span class="tooltip">Sign Out</span>
+          </button>
+        </div>
+      </aside>
+
+      <!-- Main Content Container -->
+      <main class="admin-main">
+        <!-- Top Bar (Reference 1 Inspiration) -->
+        <header class="admin-topbar">
+          <div class="topbar-left">
+            <h1 class="topbar-title" id="pageHeadingTitle">Dashboard</h1>
+            <span class="topbar-subtitle" id="pageHeadingSubtitle">Overview of library dispatches and resources</span>
+          </div>
+
+          <div class="topbar-center">
+            <div class="admin-search-wrapper">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input type="search" class="admin-search-input" id="globalAdminSearch" placeholder="Search dispatches, tags, stories...">
+            </div>
+          </div>
+
+          <div class="topbar-right">
+            <button type="button" class="action-icon-btn" id="notificationBtn" aria-label="Notifications">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              </svg>
+              <span class="badge-dot"></span>
+            </button>
+
+            <div class="admin-profile-pill" id="profilePillBtn" role="button" tabindex="0">
+              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200&q=80" alt="Admin Avatar" class="admin-avatar" id="topbarAvatar">
+              <div class="admin-info">
+                <span class="admin-name" id="topbarAdminName">StayDriven Admin</span>
+                <span class="admin-role" id="topbarAdminRole">Lead Editor & Admin</span>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- ========================================== -->
+        <!-- VIEW 1: DASHBOARD (2-Column Layout)       -->
+        <!-- ========================================== -->
+        <section class="view-section active" id="view-dashboard">
+          <div class="dashboard-grid">
+            <!-- Left 70% Column -->
+            <div class="dashboard-main-col">
+              <!-- Feature Banner Card -->
+              <div class="admin-hero-banner">
+                <div class="hero-banner-content">
+                  <span class="hero-banner-tag">StayDriven CMS</span>
+                  <h2 class="hero-banner-title">Empower your audience with daily frontier AI dispatches.</h2>
+                  <p class="hero-banner-desc">Publish structured multi-story articles, attach Google Drive slide decks, and track engagement in real time.</p>
+                  <div class="hero-banner-actions">
+                    <button type="button" class="btn-admin-primary" data-navigate="editor">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      Create New Update
+                    </button>
+                    <button type="button" class="btn-admin-secondary" data-navigate="analytics">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+                      View Analytics
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quick Category Tabs -->
+              <div class="category-pills-bar" id="dashboardCategoryPills">
+                <!-- Dynamically injected -->
+              </div>
+
+              <!-- Recent Updates Table Card -->
+              <div class="admin-card">
+                <div class="card-header-row">
+                  <div>
+                    <h3 class="card-heading">Recent Dispatches</h3>
+                    <p class="card-subtext">Latest articles and guides published to the archive</p>
+                  </div>
+                  <div style="display: flex; gap: 8px;">
+                    <button type="button" class="btn-admin-secondary btn-sm" data-navigate="updates">View All</button>
+                    <button type="button" class="btn-admin-primary btn-sm" data-navigate="editor">+ New</button>
+                  </div>
+                </div>
+
+                <div class="admin-table-container">
+                  <table class="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Category</th>
+                        <th>Title</th>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th style="text-align: right;">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="dashboardRecentTableBody">
+                      <!-- Rendered dynamically -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right 30% Column (Sidebar Widgets) -->
+            <div class="dashboard-side-col">
+              <!-- Stat Hero Card -->
+              <div class="stat-hero-card">
+                <div class="stat-hero-top">
+                  <span class="stat-hero-label">Archive Status</span>
+                  <span class="stat-hero-badge" id="heroLiveBadge">● Live & Synced</span>
+                </div>
+                <div class="stat-hero-big-number" id="heroTotalNumber">13</div>
+                <p style="font-size: 13px; opacity: 0.9; margin-bottom: 16px;">Total AI Updates & Briefings in Library</p>
+                <div class="stat-hero-footer">
+                  <span>Published: <strong id="heroPublishedCount">11</strong></span>
+                  <span>Drafts: <strong id="heroDraftsCount">2</strong></span>
+                </div>
+              </div>
+
+              <!-- Quick Metrics Grid -->
+              <div class="stat-metric-grid">
+                <div class="stat-sub-box">
+                  <span class="sub-label">This Week</span>
+                  <span class="sub-val" id="metricThisWeek">4</span>
+                </div>
+                <div class="stat-sub-box">
+                  <span class="sub-label">PDF Decks</span>
+                  <span class="sub-val" id="metricPdfs">6</span>
+                </div>
+              </div>
+
+              <!-- Quick Actions Panel -->
+              <div class="admin-card">
+                <div class="card-header-row" style="margin-bottom: 12px;">
+                  <h4 class="card-heading" style="font-size: 15px;">Quick Actions</h4>
+                </div>
+                <div class="quick-actions-list">
+                  <div class="quick-action-item" data-action="quick-ai-tool">
+                    <div class="quick-action-info">
+                      <div class="quick-action-icon">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                      </div>
+                      <span class="quick-action-title">Post AI Tool Review</span>
+                    </div>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                  </div>
+
+                  <div class="quick-action-item" data-action="quick-daily-update">
+                    <div class="quick-action-info">
+                      <div class="quick-action-icon" style="background: rgba(217, 70, 239, 0.15); color: #f0abfc;">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                      </div>
+                      <span class="quick-action-title">Post Daily AI Edge</span>
+                    </div>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                  </div>
+
+                  <div class="quick-action-item" data-action="quick-guide-pdf">
+                    <div class="quick-action-info">
+                      <div class="quick-action-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      </div>
+                      <span class="quick-action-title">Attach PDF Resource</span>
+                    </div>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Recent Activity Log -->
+              <div class="admin-card">
+                <div class="card-header-row" style="margin-bottom: 14px;">
+                  <h4 class="card-heading" style="font-size: 15px;">Recent Activity</h4>
+                </div>
+                <div class="activity-feed-list" id="dashboardActivityList">
+                  <div class="activity-item">
+                    <span class="activity-dot"></span>
+                    <div>
+                      <p class="activity-text"><strong>Free Vs Paid AI Tool</strong> was published to the public archive.</p>
+                      <span class="activity-time">2 hours ago</span>
+                    </div>
+                  </div>
+                  <div class="activity-item">
+                    <span class="activity-dot" style="background: var(--brand-magenta);"></span>
+                    <div>
+                      <p class="activity-text"><strong>Autonomous Agent Blueprint</strong> draft saved.</p>
+                      <span class="activity-time">5 hours ago</span>
+                    </div>
+                  </div>
+                  <div class="activity-item">
+                    <span class="activity-dot" style="background: #34d399;"></span>
+                    <div>
+                      <p class="activity-text">PDF attachment added to <strong>The AI Alignment Files</strong>.</p>
+                      <span class="activity-time">Yesterday</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW: ANALYTICS & TRAFFIC (Admin Only)     -->
+        <!-- ========================================== -->
+        <section class="view-section" id="view-analytics">
+          <!-- Top Action Bar with Real-time indicator -->
+          <div class="analytics-header-bar">
+            <div style="display: flex; align-items: center; gap: 14px;">
+              <span class="live-pulse-badge">
+                <span class="pulse-dot"></span>
+                <span>LIVE TRACKING ACTIVE</span>
+              </span>
+              <span style="font-size: 12px; color: var(--admin-text-dim);" id="analyticsLastSyncText">Updated just now</span>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <button type="button" class="btn-admin-secondary btn-sm" id="refreshAnalyticsBtn">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                Refresh Data
+              </button>
+              <button type="button" class="btn-admin-secondary btn-sm" id="exportAnalyticsCsvBtn">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export CSV
+              </button>
+            </div>
+          </div>
+
+          <!-- 4 KPI Summary Cards -->
+          <div class="analytics-kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-card-top">
+                <span class="kpi-title">Total Article Views</span>
+                <div class="kpi-icon">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </div>
+              </div>
+              <div class="kpi-value-row">
+                <span class="kpi-value" id="kpiTotalViews">0</span>
+                <span class="kpi-trend positive" id="kpiViewsTrend">+18%</span>
+              </div>
+              <span class="kpi-footer-text">Aggregated across all published dispatches</span>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-card-top">
+                <span class="kpi-title">Unique Visitors</span>
+                <div class="kpi-icon" style="color: #38bdf8;">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                </div>
+              </div>
+              <div class="kpi-value-row">
+                <span class="kpi-value" id="kpiUniqueVisitors">0</span>
+                <span class="kpi-trend positive">+14%</span>
+              </div>
+              <span class="kpi-footer-text">Anonymous fingerprint deduplication</span>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-card-top">
+                <span class="kpi-title">WhatsApp Clicks</span>
+                <div class="kpi-icon" style="color: #34d399;">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                </div>
+              </div>
+              <div class="kpi-value-row">
+                <span class="kpi-value" id="kpiWhatsappClicks">0</span>
+                <span class="kpi-trend positive" id="kpiConversionRate">11.8% Conv</span>
+              </div>
+              <span class="kpi-footer-text">Community conversion across site</span>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-card-top">
+                <span class="kpi-title">Today's Traffic</span>
+                <div class="kpi-icon" style="color: #fbbf24;">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
+                </div>
+              </div>
+              <div class="kpi-value-row">
+                <span class="kpi-value" id="kpiTodayViews">0</span>
+                <span class="kpi-trend neutral">Live</span>
+              </div>
+              <span class="kpi-footer-text">Total reads logged since 00:00 UTC</span>
+            </div>
+          </div>
+
+          <!-- Trend Chart & Location Breakdown -->
+          <div class="analytics-visual-grid">
+            <!-- 30-Day Trend Chart Card -->
+            <div class="admin-card">
+              <div class="card-header-row" style="margin-bottom: 8px;">
+                <div>
+                  <h3 class="card-heading">30-Day Engagement Trend</h3>
+                  <p class="card-subtext">Interactive daily activity and visitor velocity</p>
+                </div>
+                <div class="chart-metric-tabs" id="chartMetricTabs">
+                  <button type="button" class="chart-tab-btn active" data-metric="views">Page Views</button>
+                  <button type="button" class="chart-tab-btn" data-metric="unique">Unique Readers</button>
+                  <button type="button" class="chart-tab-btn" data-metric="whatsappClicks">WhatsApp Clicks</button>
+                </div>
+              </div>
+
+              <!-- Interactive Chart Viewport -->
+              <div class="svg-chart-container" id="analyticsChartContainer">
+                <!-- Injected via admin.js SVG renderer -->
+                <div class="chart-tooltip" id="chartTooltip"></div>
+              </div>
+            </div>
+
+            <!-- WhatsApp Clicks Distribution Breakdown -->
+            <div class="admin-card">
+              <div class="card-header-row" style="margin-bottom: 12px;">
+                <div>
+                  <h3 class="card-heading">WhatsApp Conversions</h3>
+                  <p class="card-subtext">Clicks grouped by CTA placement</p>
+                </div>
+              </div>
+
+              <div class="dist-list" id="whatsappDistList">
+                <!-- Dynamically rendered -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Top Performing Posts Table Card -->
+          <div class="admin-card">
+            <div class="card-header-row">
+              <div>
+                <h3 class="card-heading">Post Engagement Performance</h3>
+                <p class="card-subtext">Real view counts, click-through rates, and document downloads per article</p>
+              </div>
+              <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="search" class="admin-search-input" id="analyticsPostSearch" placeholder="Filter articles..." style="height: 36px; font-size: 12px; width: 220px;">
+              </div>
+            </div>
+
+            <div class="admin-table-container">
+              <table class="admin-table" id="analyticsRankedTable">
+                <thead>
+                  <tr>
+                    <th style="cursor: pointer;" data-sort="title">Article & Category ↕</th>
+                    <th style="cursor: pointer; text-align: right;" data-sort="views">Views ↕</th>
+                    <th style="cursor: pointer; text-align: right;" data-sort="unique">Unique ↕</th>
+                    <th style="cursor: pointer; text-align: right;" data-sort="whatsappClicks">WhatsApp Clicks ↕</th>
+                    <th style="cursor: pointer; text-align: right;" data-sort="conversionRate">Conversion Rate ↕</th>
+                    <th style="text-align: right;">PDF / Resources</th>
+                    <th style="cursor: pointer; text-align: right;" data-sort="lastViewedAt">Last Viewed ↕</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="analyticsRankedTableBody">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Real-Time Activity Event Stream -->
+          <div class="admin-card" style="margin-top: 24px;">
+            <div class="card-header-row" style="margin-bottom: 14px;">
+              <div>
+                <h3 class="card-heading">Live Anonymous Event Log</h3>
+                <p class="card-subtext">Streaming anonymous user engagements and click events</p>
+              </div>
+            </div>
+            <div class="activity-feed-list" id="analyticsLiveFeed">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW 2: ALL UPDATES (List / Grid View)     -->
+        <!-- ========================================== -->
+        <section class="view-section" id="view-updates">
+          <div class="controls-bar">
+            <!-- Filter Pills -->
+            <div class="filters-row" id="updatesFilterPills">
+              <button type="button" class="filter-btn-pill active" data-tag="ALL">All (<span id="tagCountAll">0</span>)</button>
+              <button type="button" class="filter-btn-pill" data-tag="AI TOOL">AI TOOL</button>
+              <button type="button" class="filter-btn-pill" data-tag="DAILY AI UPDATE">DAILY AI UPDATE</button>
+              <button type="button" class="filter-btn-pill" data-tag="GUIDE">GUIDE</button>
+              <button type="button" class="filter-btn-pill" data-tag="ROADMAP">ROADMAP</button>
+            </div>
+
+            <!-- View Mode Toggles & New CTA -->
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <select class="form-select" id="statusFilterSelect" style="width: auto; padding: 6px 14px; font-size: 12px; height: 38px;">
+                <option value="ALL">All Statuses</option>
+                <option value="published">Published Only</option>
+                <option value="draft">Drafts Only</option>
+              </select>
+
+              <div class="view-mode-toggles">
+                <button type="button" class="view-mode-btn active" id="viewModeTableBtn" title="Table View">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                  Table
+                </button>
+                <button type="button" class="view-mode-btn" id="viewModeGridBtn" title="Card Grid View">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                  Grid
+                </button>
+              </div>
+
+              <button type="button" class="btn-admin-primary" data-navigate="editor">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                + New Update
+              </button>
+            </div>
+          </div>
+
+          <!-- Bulk Selection Bar -->
+          <div class="bulk-bar" id="bulkBar" style="display: none;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <input type="checkbox" id="bulkSelectAllCheckbox">
+              <span id="bulkSelectedCount" style="font-weight: 700; font-size: 13px; color: #ffffff;">0 selected</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" class="btn-admin-secondary btn-sm" id="bulkPublishBtn">Publish Selected</button>
+              <button type="button" class="btn-admin-secondary btn-sm" id="bulkDraftBtn">Mark as Draft</button>
+              <button type="button" class="btn-admin-danger btn-sm" id="bulkDeleteBtn">Delete</button>
+            </div>
+          </div>
+
+          <!-- Table Container -->
+          <div class="admin-card" id="allUpdatesTableCard">
+            <div class="admin-table-container">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th style="width: 40px;"><input type="checkbox" id="masterCheckbox" title="Select All"></th>
+                    <th>Category</th>
+                    <th>Title</th>
+                    <th>Date</th>
+                    <th>Format</th>
+                    <th>Views</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="allUpdatesTableBody">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Card Grid Container -->
+          <div class="updates-card-grid" id="allUpdatesGrid" style="display: none;">
+            <!-- Rendered dynamically -->
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW 3: COMPOSER / EDITOR (Structured)     -->
+        <!-- ========================================== -->
+        <section class="view-section" id="view-editor">
+          <div class="editor-container">
+            <div class="editor-header">
+              <div>
+                <h2 class="editor-title" id="editorViewHeading">Create New Intelligence Briefing</h2>
+                <p class="editor-subtitle">Compose rich, structured AI dispatches with repeatable story cards, Drive PDF embeds, and resource links.</p>
+              </div>
+              <div style="display: flex; gap: 10px;">
+                <button type="button" class="btn-admin-secondary" id="previewArticleModalBtn">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  Preview Layout
+                </button>
+                <button type="button" class="btn-admin-secondary" data-navigate="updates">
+                  Cancel
+                </button>
+              </div>
+            </div>
+
+            <!-- Dynamic Article Engagement Drilldown Box (Visible when editing existing article) -->
+            <div id="editorAnalyticsBox" style="display: none;"></div>
+
+            <form id="updateForm" class="editor-form">
+              <input type="hidden" id="updateId" value="">
+
+              <!-- 1. Metadata Section Card -->
+              <div class="editor-section-card">
+                <div class="editor-section-header">
+                  <h3 class="editor-section-title">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    Metadata & Identification
+                  </h3>
+                </div>
+
+                <div class="form-grid-2">
+                  <div class="form-group">
+                    <label class="form-label" for="updateTag">Category Tag *</label>
+                    <select class="form-select" id="updateTag" required>
+                      <option value="AI TOOL">AI TOOL</option>
+                      <option value="DAILY AI UPDATE" selected>DAILY AI UPDATE</option>
+                      <option value="GUIDE">GUIDE</option>
+                      <option value="ROADMAP">ROADMAP</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label" for="updateDate">Publish Date String *</label>
+                    <input type="text" class="form-input" id="updateDate" placeholder="e.g. August 23, 2026" required>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="updateTitle">Article Title / Main Headline *</label>
+                  <input type="text" class="form-input" id="updateTitle" placeholder="e.g. Reinventing Workflows: Free vs Paid AI Tools in 2026" required>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="updateExcerpt">Card Excerpt / Lead Summary *</label>
+                  <textarea class="form-textarea" id="updateExcerpt" rows="2" placeholder="Brief 1-2 sentence teaser shown on cards in the archive grid..." required></textarea>
+                </div>
+
+                <div class="form-grid-2">
+                  <div class="form-group">
+                    <label class="form-label" for="updateAuthorName">Author Byline Name</label>
+                    <input type="text" class="form-input" id="updateAuthorName" placeholder="e.g. StayDriven Editorial">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="updateAuthorAvatar">Author Avatar Photo URL</label>
+                    <input type="url" class="form-input" id="updateAuthorAvatar" placeholder="https://images.unsplash.com/...">
+                  </div>
+                </div>
+
+                <div class="form-grid-2">
+                  <div class="form-group">
+                    <label class="form-label" for="updateSlug">URL Slug (Auto-generated)</label>
+                    <input type="text" class="form-input" id="updateSlug" placeholder="free-vs-paid-ai-tools-2026">
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <div style="display: flex; gap: 10px; align-items: center; height: 46px;">
+                      <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
+                        <input type="radio" name="updateStatus" value="published" checked>
+                        <span class="status-pill published">● Published</span>
+                      </label>
+                      <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
+                        <input type="radio" name="updateStatus" value="draft">
+                        <span class="status-pill draft">● Draft</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Content Type Segmented Picker -->
+                <div class="form-group">
+                  <label class="form-label">Content Format</label>
+                  <div class="segmented-picker" id="contentTypePicker">
+                    <label class="active" data-type="article">
+                      <input type="radio" name="contentType" value="article" checked>
+                      <span>Written Article</span>
+                    </label>
+                    <label data-type="pdf">
+                      <input type="radio" name="contentType" value="pdf">
+                      <span>PDF Resource</span>
+                    </label>
+                    <label data-type="both">
+                      <input type="radio" name="contentType" value="both">
+                      <span>Both (Article + PDF)</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 2. Featured Thumbnail Card -->
+              <div class="editor-section-card">
+                <div class="editor-section-header">
+                  <h3 class="editor-section-title">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    Featured Thumbnail Image (Optional)
+                  </h3>
+                </div>
+                <div style="display: flex; gap: 20px; align-items: center;">
+                  <div style="width: 140px; height: 90px; border-radius: var(--radius-md); overflow: hidden; background: var(--admin-surface-2); border: 1px solid var(--admin-border); flex-shrink: 0;" id="thumbPreviewWrap">
+                    <img src="" id="thumbPreviewImg" style="width: 100%; height: 100%; object-fit: cover; display: none;" alt="Thumbnail Preview">
+                    <div id="thumbPlaceholder" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--admin-text-dim);">No Image</div>
+                  </div>
+                  <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+                    <input type="url" class="form-input" id="updateThumbnailUrl" placeholder="Paste image URL (https://images.unsplash.com/...)">
+                    <span class="form-label-helper">Or pick from curated realistic photography:</span>
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                      <button type="button" class="btn-admin-secondary btn-sm" data-quick-img="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1200&q=80">Team Laptops</button>
+                      <button type="button" class="btn-admin-secondary btn-sm" data-quick-img="https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1200&q=80">Tech Strategy</button>
+                      <button type="button" class="btn-admin-secondary btn-sm" data-quick-img="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80">Code Workspace</button>
+                      <button type="button" class="btn-admin-secondary btn-sm" data-quick-img="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1200&q=80">Hardware Dev</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 3. Written Article Builder (Visible when article or both) -->
+              <div class="editor-section-card" id="articleBuilderSection">
+                <div class="editor-section-header">
+                  <div>
+                    <h3 class="editor-section-title">
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                      Written Article Content & Multi-Story Structure
+                    </h3>
+                    <p class="form-label-helper" style="margin-top: 4px;">Structure stories with numbered cards, headlines, and "What changes." / "Why it matters." callouts.</p>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="articleSectionTitle">Article Main Headline</label>
+                  <input type="text" class="form-input" id="articleSectionTitle" placeholder="e.g. Navigating Tiered Model Access in Enterprise Workflows">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="articleSectionSubtitle">Section Subtitle / Context</label>
+                  <input type="text" class="form-input" id="articleSectionSubtitle" placeholder="e.g. Why zero-dollar models are closing the gap, but premium orchestration keeps the crown.">
+                </div>
+
+                <!-- Repeatable Story Blocks List -->
+                <div class="form-group">
+                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                    <label class="form-label">Numbered Story Cards</label>
+                    <button type="button" class="btn-admin-secondary btn-sm" id="addStoryBlockBtn">
+                      + Add Story Card
+                    </button>
+                  </div>
+                  <div class="stories-list" id="storiesListContainer">
+                    <!-- Dynamic story blocks injected here -->
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="articleBroaderContext">Broader Context / Concluding Takeaway</label>
+                  <textarea class="form-textarea" id="articleBroaderContext" rows="3" placeholder="Summary or closing perspective for the article..."></textarea>
+                </div>
+              </div>
+
+              <!-- 4. PDF Resource Section (Visible when pdf or both) -->
+              <div class="editor-section-card" id="pdfResourceSection">
+                <div class="editor-section-header">
+                  <h3 class="editor-section-title">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                    PDF Deck & Google Drive Embed
+                  </h3>
+                </div>
+
+                <div class="helper-banner">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                  <span><strong>Google Drive Tip:</strong> Paste a standard Google Drive share link (e.g. <code>https://drive.google.com/file/d/ID/view</code>). Make sure access is set to <em>"Anyone with the link can view"</em>. The CMS will automatically format the embed preview.</span>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="primaryPdfLabel">PDF Document Label</label>
+                  <input type="text" class="form-input" id="primaryPdfLabel" placeholder="e.g. AI Tooling Decision Matrix 2026 (PDF)">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="primaryPdfUrl">Google Drive Share Link</label>
+                  <input type="url" class="form-input" id="primaryPdfUrl" placeholder="https://drive.google.com/file/d/1ExampleDriveId/view?usp=sharing">
+                </div>
+
+                <!-- Inline Live PDF Iframe Preview -->
+                <div class="form-group">
+                  <label class="form-label">Live PDF Embed Preview</label>
+                  <div class="pdf-preview-box" id="pdfEmbedPreviewBox">
+                    <div class="pdf-preview-placeholder" id="pdfEmptyPreview">
+                      <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      <p>Enter a valid Google Drive link above to view live document embed preview.</p>
+                    </div>
+                    <iframe id="pdfPreviewIframe" style="display: none;" title="Google Drive PDF Preview" allow="autoplay"></iframe>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 5. Helpful Resource Links Section -->
+              <div class="editor-section-card">
+                <div class="editor-section-header">
+                  <h3 class="editor-section-title">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                    Helpful Resource Links
+                  </h3>
+                  <button type="button" class="btn-admin-secondary btn-sm" id="addResourceLinkBtn">
+                    + Add Resource Link
+                  </button>
+                </div>
+
+                <div id="resourceLinksContainer" style="display: flex; flex-direction: column; gap: 12px;">
+                  <!-- Dynamic link inputs -->
+                </div>
+              </div>
+
+              <!-- Sticky Action Bar -->
+              <div class="editor-bottom-bar">
+                <div class="editor-bottom-left">
+                  <span id="editorStatusIndicator">● Unsaved changes</span>
+                </div>
+                <div class="editor-bottom-actions">
+                  <button type="button" class="btn-admin-secondary" id="saveDraftBtn">Save as Draft</button>
+                  <button type="submit" class="btn-admin-primary" id="publishBtn">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    Publish to Public Archive
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW 4: MEDIA & PDF LIBRARY                -->
+        <!-- ========================================== -->
+        <section class="view-section" id="view-media">
+          <div class="admin-card">
+            <div class="card-header-row">
+              <div>
+                <h3 class="card-heading">Attached PDFs & Slide Decks</h3>
+                <p class="card-subtext">All Google Drive attachments and downloadable resources across dispatches</p>
+              </div>
+            </div>
+
+            <div class="updates-card-grid" id="mediaLibraryGrid">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW 5: SETTINGS & BACKUP                  -->
+        <!-- ========================================== -->
+        <section class="view-section" id="view-settings">
+          <div class="editor-container">
+            <!-- Profile Settings Card -->
+            <div class="editor-section-card">
+              <div class="editor-section-header">
+                <h3 class="editor-section-title">Admin Profile Settings</h3>
+              </div>
+              <form id="adminProfileForm">
+                <div class="form-grid-2">
+                  <div class="form-group">
+                    <label class="form-label" for="settingsAdminName">Admin Name</label>
+                    <input type="text" class="form-input" id="settingsAdminName" value="StayDriven Admin">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="settingsAdminRole">Role Title</label>
+                    <input type="text" class="form-input" id="settingsAdminRole" value="Lead Editor & Admin">
+                  </div>
+                </div>
+                <div class="form-group" style="margin-top: 14px;">
+                  <label class="form-label" for="settingsAdminAvatar">Avatar Photo URL</label>
+                  <input type="url" class="form-input" id="settingsAdminAvatar" value="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200&q=80">
+                </div>
+                <div class="form-group" style="margin-top: 14px;">
+                  <label class="form-label" for="settingsAboutText">Global "About StayDriven" Sidebar Text (Public Site)</label>
+                  <textarea class="form-textarea" id="settingsAboutText" rows="4" placeholder="StayDriven is your intelligence layer for the AI era."></textarea>
+                  <span class="form-label-helper">Displayed in the right-hand sidebar of all public article reading pages.</span>
+                </div>
+                <div style="margin-top: 16px;">
+                  <button type="submit" class="btn-admin-primary btn-sm">Save Profile & Settings</button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Database & JSON Backup Card -->
+            <div class="editor-section-card">
+              <div class="editor-section-header">
+                <h3 class="editor-section-title">Data Storage, Backup & Restore</h3>
+              </div>
+              <p style="font-size: 13px; color: var(--admin-text-muted);">
+                The CMS runs on local persistent storage synced with the public site. You can export a complete JSON snapshot or restore a previous backup anytime.
+              </p>
+              <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <button type="button" class="btn-admin-secondary" id="exportDataBtn">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Export JSON Backup
+                </button>
+                <label class="btn-admin-secondary" style="cursor: pointer;">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Import JSON File
+                  <input type="file" id="importJsonInput" accept=".json" style="display: none;">
+                </label>
+                <button type="button" class="btn-admin-danger" id="resetDefaultsBtn">
+                  Reset to Default Demo Data
+                </button>
+              </div>
+            </div>
+
+            <!-- Backend Swap Note -->
+            <div class="editor-section-card" style="border-color: rgba(124, 58, 237, 0.4); background: rgba(124, 58, 237, 0.05);">
+              <h3 class="editor-section-title" style="color: var(--brand-pink);">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Developer Integration Notice
+              </h3>
+              <p style="font-size: 13px; color: var(--admin-text-muted); line-height: 1.6;">
+                The data layer and analytics tracker are encapsulated inside <code>cms-store.js</code>. To replace localStorage with Firebase, Supabase, or PostgreSQL API endpoints, simply connect the store methods to your backend without modifying the admin UI controllers.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW 6: REAL LOGIN SCREEN                  -->
+        <!-- ========================================== -->
+        <section class="view-section" id="view-login">
+          <div class="login-view-wrapper">
+            <div class="login-card">
+              <div class="login-header">
+                <div class="sidebar-brand-icon" style="width: 52px; height: 52px; display: flex; align-items: center; justify-content: center;">
+                  <img src="/src/assets/logo.png" alt="StayDriven Emblem" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover;">
+                </div>
+                <h2 class="login-title">StayDriven CMS</h2>
+                <p class="login-subtitle">Sign in to access your admin intelligence portal</p>
+              </div>
+
+              <form id="adminLoginForm" style="display: flex; flex-direction: column; gap: 16px;">
+                <div class="form-group">
+                  <label class="form-label" for="loginEmail">Email Address</label>
+                  <input type="email" class="form-input" id="loginEmail" placeholder="name@staydriven.community" required autocomplete="username">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="loginPassword">Password</label>
+                  <input type="password" class="form-input" id="loginPassword" placeholder="Enter your password" required autocomplete="current-password">
+                </div>
+
+                <button type="submit" class="btn-admin-primary" style="justify-content: center; width: 100%; height: 48px; font-size: 14px; margin-top: 6px;">
+                  Sign In to Admin Panel
+                </button>
+              </form>
+
+              <div style="text-align: center; margin-top: 8px;">
+                <a href="/" class="form-label-helper" style="color: var(--admin-text-muted); text-decoration: underline;">← Return to Public Website</a>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODALS & PREVIEWS                          -->
+    <!-- ========================================== -->
+    <!-- 1. Live Article Preview Modal -->
+    <div class="modal-overlay" id="articlePreviewModal">
+      <div class="modal-dialog modal-large">
+        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--admin-border); padding-bottom: 14px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="tag-badge ai-tool" id="modalPreviewTag">AI TOOL</span>
+            <span style="font-size: 12px; color: var(--admin-text-muted);" id="modalPreviewDate">21st Aug, 2026</span>
+          </div>
+          <button type="button" class="table-action-btn" id="closePreviewModalBtn" aria-label="Close Preview">✕</button>
+        </div>
+
+        <div id="modalArticleRenderBody" style="display: flex; flex-direction: column; gap: 20px;">
+          <!-- Article Rendered Here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Delete Confirmation Modal -->
+    <div class="modal-overlay" id="deleteConfirmModal">
+      <div class="modal-dialog" style="max-width: 420px;">
+        <div style="display: flex; flex-direction: column; gap: 12px; text-align: center; align-items: center;">
+          <div style="width: 50px; height: 50px; border-radius: 50%; background: rgba(239, 68, 68, 0.15); color: #ef4444; display: flex; align-items: center; justify-content: center;">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          </div>
+          <h3 style="font-size: 18px; font-weight: 700; color: #ffffff;">Delete Update?</h3>
+          <p style="font-size: 13px; color: var(--admin-text-muted);" id="deleteConfirmText">Are you sure you want to delete this update from the public archive?</p>
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 10px;">
+          <button type="button" class="btn-admin-secondary" id="cancelDeleteBtn">Cancel</button>
+          <button type="button" class="btn-admin-danger" id="confirmDeleteActionBtn">Yes, Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Load Module Scripts -->
+    <script type="module" src="cms-store.js"></script>
+    <script type="module" src="admin.js"></script>
+  </body>
+</html>
