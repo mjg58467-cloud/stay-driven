@@ -1,0 +1,19 @@
+{
+  "routes": [
+    {
+      "src": "/api/track",
+      "dest": "/api/track.js"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(?:admin|sd-internal-access)(?:/.*)?",
+      "dest": "/admin.html"
+    },
+    {
+      "src": "/.*",
+      "dest": "/index.html"
+    }
+  ]
+}
