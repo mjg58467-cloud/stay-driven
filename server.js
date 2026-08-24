@@ -13,13 +13,17 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
-const PORT = 3000;
-const DATA_DIR = path.join(__dirname, 'data');
-const DB_FILE = path.join(DATA_DIR, 'store.json');
+const PORT = process.env.PORT || 3000;
+const DATA_DIR = process.env.VERCEL ? path.join('/tmp', 'data') : path.join(__dirname, 'data');
+const DB_FILE = process.env.VERCEL ? path.join('/tmp', 'data', 'store.json') : path.join(DATA_DIR, 'store.json');
 
 // Ensure data directory exists
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+try {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+} catch (err) {
+  console.warn('[DB] Notice: Running on read-only file system (Vercel Lambda):', err.message);
 }
 
 // In-Memory Data Store with File Backup
@@ -68,8 +72,17 @@ function hashPassword(password) {
 
 function loadDatabase() {
   try {
+    let raw = null;
     if (fs.existsSync(DB_FILE)) {
-      const raw = fs.readFileSync(DB_FILE, 'utf-8');
+      raw = fs.readFileSync(DB_FILE, 'utf-8');
+    } else {
+      const bundledFile = path.join(__dirname, 'data', 'store.json');
+      if (fs.existsSync(bundledFile)) {
+        raw = fs.readFileSync(bundledFile, 'utf-8');
+      }
+    }
+
+    if (raw) {
       const parsed = JSON.parse(raw);
       db = {
         ...db,
@@ -102,9 +115,12 @@ function loadDatabase() {
 
 function saveDatabase() {
   try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
     fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), 'utf-8');
   } catch (err) {
-    console.error('[DB] Failed to save store file:', err);
+    console.warn('[DB] Notice: Could not write DB file to disk (retained in memory):', err.message);
   }
 }
 
@@ -1017,6 +1033,11 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`[StayDriven Server] running on http://0.0.0.0:${PORT}`);
-});
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
+  server.listen(PORT, '0.0.0.0', () => {
+    console.log(`[StayDriven Server] running on http://0.0.0.0:${PORT}`);
+  });
+}
+
+export default app;
+export { app, server, wss };
