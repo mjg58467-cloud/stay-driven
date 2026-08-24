@@ -299,9 +299,38 @@ export class CMSStore {
     this.wsConnected = false;
     this.reconnectTimer = null;
     this.pingTimer = null;
+    this.pollingTimer = null;
+    this.isSyncing = false;
+
     this.init();
     this.initWebSocket();
     this.syncFromServer();
+    this.initContinuousSync();
+  }
+
+  initContinuousSync() {
+    // 1. Periodic background sync every 4 seconds
+    if (this.pollingTimer) clearInterval(this.pollingTimer);
+    this.pollingTimer = setInterval(() => {
+      this.syncFromServer();
+    }, 4000);
+
+    // 2. Immediate sync when user switches tabs back or focuses window
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          this.syncFromServer();
+        }
+      });
+
+      window.addEventListener('focus', () => {
+        this.syncFromServer();
+      });
+
+      window.addEventListener('online', () => {
+        this.syncFromServer();
+      });
+    }
   }
 
   init() {

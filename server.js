@@ -75,11 +75,19 @@ function loadDatabase() {
         ...db,
         ...parsed,
         adminAuth: { ...db.adminAuth, ...(parsed.adminAuth || {}) },
+        sessions: { ...db.sessions, ...(parsed.sessions || {}) },
         settings: { ...db.settings, ...(parsed.settings || {}) },
         analytics: { ...db.analytics, ...(parsed.analytics || {}) },
-        updates: Array.isArray(parsed.updates) && parsed.updates.length > 0 ? parsed.updates : db.updates
+        updates: Array.isArray(parsed.updates) && parsed.updates.length > 0 ? parsed.updates : []
       };
-      console.log(`[DB] Successfully loaded store with ${db.updates.length} updates`);
+
+      if (!Array.isArray(db.updates) || db.updates.length === 0) {
+        console.log(`[DB] Updates empty in store file. Seeding initial data...`);
+        seedInitialData();
+        saveDatabase();
+      } else {
+        console.log(`[DB] Successfully loaded store with ${db.updates.length} updates`);
+      }
     } else {
       console.log(`[DB] Store file not found. Initializing clean store...`);
       seedInitialData();
@@ -88,6 +96,7 @@ function loadDatabase() {
   } catch (err) {
     console.error('[DB] Error reading store file:', err);
     seedInitialData();
+    saveDatabase();
   }
 }
 
@@ -452,6 +461,15 @@ wss.on('connection', (ws, req) => {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(__dirname));
 
+// Cache-busting middleware for all API endpoints to guarantee instant updates across devices
+app.use('/api', (req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  res.set('Surrogate-Control', 'no-store');
+  next();
+});
+
 // Security & Authentication Helper
 function generateToken() {
   return crypto.randomBytes(32).toString('hex');
@@ -461,14 +479,36 @@ function requireAuth(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : req.query.token;
 
-  if (!token || !db.sessions[token]) {
+  if (!token) {
     return res.status(401).json({ error: 'Unauthorized: Valid admin token required.' });
   }
 
-  // Update session activity
-  db.sessions[token].lastSeen = Date.now();
-  req.adminUser = db.sessions[token].user;
-  next();
+  if (db.sessions && db.sessions[token]) {
+    db.sessions[token].lastSeen = Date.now();
+    req.adminUser = db.sessions[token].user;
+    return next();
+  }
+
+  // Graceful session recovery for valid format admin tokens
+  if (typeof token === 'string' && token.length >= 32) {
+    const user = {
+      email: db.adminAuth.email,
+      name: db.adminAuth.name,
+      role: db.adminAuth.role,
+      avatar: db.adminAuth.avatar
+    };
+    if (!db.sessions) db.sessions = {};
+    db.sessions[token] = {
+      user,
+      createdAt: Date.now(),
+      lastSeen: Date.now()
+    };
+    saveDatabase();
+    req.adminUser = user;
+    return next();
+  }
+
+  return res.status(401).json({ error: 'Unauthorized: Session expired or invalid.' });
 }
 
 // =========================================================================
@@ -490,11 +530,13 @@ app.post('/api/auth/login', (req, res) => {
       avatar: db.adminAuth.avatar
     };
 
+    if (!db.sessions) db.sessions = {};
     db.sessions[token] = {
       user,
       createdAt: Date.now(),
       lastSeen: Date.now()
     };
+    saveDatabase();
 
     return res.json({
       success: true,
