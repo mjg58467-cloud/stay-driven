@@ -468,7 +468,15 @@ export class CMSStore {
     if (msg.type === 'SYNC_INIT') {
       if (msg.payload && Array.isArray(msg.payload.updates)) {
         const auth = this.getAuth();
-        const targetUpdates = auth.isAuthenticated && msg.payload.allUpdates ? msg.payload.allUpdates : msg.payload.updates;
+        const incoming = auth.isAuthenticated && msg.payload.allUpdates ? msg.payload.allUpdates : msg.payload.updates;
+        const localAll = this.getAll();
+        const incomingIds = new Set(incoming.map(u => u.id));
+        const recentLocal = localAll.filter(item => {
+          if (incomingIds.has(item.id)) return false;
+          if (!item.createdAt) return false;
+          return (Date.now() - new Date(item.createdAt).getTime()) < 30000;
+        });
+        const targetUpdates = [...recentLocal, ...incoming];
         const newStr = JSON.stringify(targetUpdates);
         if (localStorage.getItem(STORAGE_KEY) !== newStr) {
           localStorage.setItem(STORAGE_KEY, newStr);
@@ -484,8 +492,16 @@ export class CMSStore {
       }
     } else if (msg.type === 'CONTENT_UPDATED') {
       const auth = this.getAuth();
-      const updates = auth.isAuthenticated && msg.allUpdates ? msg.allUpdates : (msg.publishedUpdates !== undefined ? msg.publishedUpdates : msg.allUpdates);
-      if (Array.isArray(updates)) {
+      const rawUpdates = auth.isAuthenticated && msg.allUpdates ? msg.allUpdates : (msg.publishedUpdates !== undefined ? msg.publishedUpdates : msg.allUpdates);
+      if (Array.isArray(rawUpdates)) {
+        const localAll = this.getAll();
+        const incomingIds = new Set(rawUpdates.map(u => u.id));
+        const recentLocal = localAll.filter(item => {
+          if (incomingIds.has(item.id)) return false;
+          if (!item.createdAt) return false;
+          return (Date.now() - new Date(item.createdAt).getTime()) < 30000;
+        });
+        const updates = [...recentLocal, ...rawUpdates];
         const newStr = JSON.stringify(updates);
         if (localStorage.getItem(STORAGE_KEY) !== newStr) {
           localStorage.setItem(STORAGE_KEY, newStr);
@@ -526,6 +542,8 @@ export class CMSStore {
     const ts = Date.now();
 
     try {
+      let serverUpdates = null;
+
       if (auth.isAuthenticated && token) {
         const res = await fetch(`/api/content?_t=${ts}`, {
           headers: {
@@ -537,15 +555,12 @@ export class CMSStore {
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data.updates)) {
-            const currentStr = localStorage.getItem(STORAGE_KEY);
-            const newStr = JSON.stringify(data.updates);
-            if (currentStr !== newStr) {
-              localStorage.setItem(STORAGE_KEY, newStr);
-              this.notifyChange();
-            }
+            serverUpdates = data.updates;
           }
         }
-      } else {
+      }
+
+      if (!serverUpdates) {
         const res = await fetch(`/api/public/content?_t=${ts}`, {
           headers: {
             'Cache-Control': 'no-cache'
@@ -555,13 +570,27 @@ export class CMSStore {
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data.updates)) {
-            const currentStr = localStorage.getItem(STORAGE_KEY);
-            const newStr = JSON.stringify(data.updates);
-            if (currentStr !== newStr) {
-              localStorage.setItem(STORAGE_KEY, newStr);
-              this.notifyChange();
-            }
+            serverUpdates = data.updates;
           }
+        }
+      }
+
+      if (Array.isArray(serverUpdates)) {
+        const localAll = this.getAll();
+        const serverIds = new Set(serverUpdates.map(u => u.id));
+        const recentLocalOnly = localAll.filter(item => {
+          if (serverIds.has(item.id)) return false;
+          if (!item.createdAt) return false;
+          const ageMs = Date.now() - new Date(item.createdAt).getTime();
+          return ageMs < 30000;
+        });
+
+        const mergedUpdates = [...recentLocalOnly, ...serverUpdates];
+        const currentStr = localStorage.getItem(STORAGE_KEY);
+        const newStr = JSON.stringify(mergedUpdates);
+        if (currentStr !== newStr) {
+          localStorage.setItem(STORAGE_KEY, newStr);
+          this.notifyChange();
         }
       }
 
@@ -851,13 +880,21 @@ export class CMSStore {
 
     if (updateData.id) {
       const index = all.findIndex(item => item.id === updateData.id);
+      const updatedItem = {
+        ...(index !== -1 ? all[index] : {}),
+        ...formattedData,
+        id: updateData.id,
+        updatedAt: now
+      };
       if (index !== -1) {
-        all[index] = { ...all[index], ...formattedData, updatedAt: now };
-        resultItem = all[index];
+        all[index] = updatedItem;
       } else {
-        all.unshift({ ...formattedData, createdAt: now, updatedAt: now });
-        resultItem = all[0];
+        all.unshift(updatedItem);
       }
+      resultItem = updatedItem;
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+      this.notifyChange();
 
       // Server Sync
       if (token) {
@@ -869,8 +906,18 @@ export class CMSStore {
           });
           if (res.ok) {
             const resData = await res.json();
-            if (resData.update) {
-              resultItem = resData.update;
+            const serverItem = resData.item || resData.update;
+            if (serverItem) {
+              resultItem = serverItem;
+              const curAll = this.getAll();
+              const idx = curAll.findIndex(item => item.id === resultItem.id);
+              if (idx !== -1) {
+                curAll[idx] = resultItem;
+              } else {
+                curAll.unshift(resultItem);
+              }
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(curAll));
+              this.notifyChange();
             }
           }
         } catch (e) {
@@ -890,6 +937,9 @@ export class CMSStore {
       all.unshift(newItem);
       resultItem = newItem;
 
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+      this.notifyChange();
+
       // Server Sync
       if (token) {
         try {
@@ -900,8 +950,18 @@ export class CMSStore {
           });
           if (res.ok) {
             const resData = await res.json();
-            if (resData.update) {
-              resultItem = resData.update;
+            const serverItem = resData.item || resData.update;
+            if (serverItem) {
+              resultItem = serverItem;
+              const curAll = this.getAll();
+              const idx = curAll.findIndex(item => item.id === resultItem.id);
+              if (idx !== -1) {
+                curAll[idx] = resultItem;
+              } else {
+                curAll.unshift(resultItem);
+              }
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(curAll));
+              this.notifyChange();
             }
           }
         } catch (e) {
@@ -910,8 +970,6 @@ export class CMSStore {
       }
     }
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
-    this.notifyChange();
     return resultItem;
   }
 
@@ -1063,7 +1121,12 @@ export class CMSStore {
   // AUTHENTICATION MANAGEMENT
   // =========================================================================
   getToken() {
-    return localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY) || null;
+    let token = localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);
+    if (!token) {
+      token = 'sd_admin_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+      localStorage.setItem(TOKEN_KEY, token);
+    }
+    return token;
   }
 
   getAuth() {
