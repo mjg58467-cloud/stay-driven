@@ -462,56 +462,104 @@ export class CMSStore {
     } catch (e) {}
   }
 
+  // Pure deterministic merge of local and incoming server updates
+  mergeUpdates(localList, incomingList) {
+    if (!Array.isArray(incomingList)) return Array.isArray(localList) ? localList : [];
+    if (!Array.isArray(localList) || localList.length === 0) return incomingList;
+
+    const map = new Map();
+
+    // 1. Seed map with incoming server items
+    incomingList.forEach(item => {
+      if (item && item.id) {
+        map.set(item.id, item);
+      }
+    });
+
+    // 2. Process local items
+    const now = Date.now();
+    localList.forEach(localItem => {
+      if (!localItem || !localItem.id) return;
+      const incomingItem = map.get(localItem.id);
+
+      if (incomingItem) {
+        // If present in both, prefer newer local edit if made recently (< 30s)
+        const localTime = new Date(localItem.updatedAt || localItem.createdAt || 0).getTime();
+        const incomingTime = new Date(incomingItem.updatedAt || incomingItem.createdAt || 0).getTime();
+        if (localTime > incomingTime && (now - localTime) < 30000) {
+          map.set(localItem.id, { ...incomingItem, ...localItem });
+        }
+      } else {
+        // Local item not present on server list:
+        // Keep it if it was created/updated recently (< 5 minutes grace period)
+        const itemTime = new Date(localItem.createdAt || localItem.updatedAt || 0).getTime();
+        if ((now - itemTime) < 300000) {
+          map.set(localItem.id, localItem);
+        }
+      }
+    });
+
+    // 3. Return stably sorted list
+    return Array.from(map.values()).sort((a, b) => {
+      const timeA = new Date(a.updatedAt || a.createdAt || a.date || 0).getTime();
+      const timeB = new Date(b.updatedAt || b.createdAt || b.date || 0).getTime();
+      return timeB - timeA;
+    });
+  }
+
+  // Apply updates to localStorage and only notify if genuine differences exist
+  applyUpdates(newList) {
+    if (!Array.isArray(newList)) return;
+    const currentList = this.getAll();
+
+    // Fast check: compare counts and items
+    const isDifferent = currentList.length !== newList.length ||
+      newList.some((item, idx) => {
+        const cur = currentList[idx];
+        if (!cur) return true;
+        return cur.id !== item.id ||
+               cur.status !== item.status ||
+               cur.title !== item.title ||
+               cur.updatedAt !== item.updatedAt ||
+               (cur.analytics?.viewCount || 0) !== (item.analytics?.viewCount || 0) ||
+               (cur.analytics?.uniqueViewCount || 0) !== (item.analytics?.uniqueViewCount || 0);
+      });
+
+    if (isDifferent) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(newList));
+      this.notifyChange();
+    }
+  }
+
   handleIncomingSync(msg) {
     if (!msg || !msg.type) return;
 
-    if (msg.type === 'SYNC_INIT') {
-      if (msg.payload && Array.isArray(msg.payload.updates)) {
-        const auth = this.getAuth();
-        const incoming = auth.isAuthenticated && msg.payload.allUpdates ? msg.payload.allUpdates : msg.payload.updates;
-        const localAll = this.getAll();
-        const incomingIds = new Set(incoming.map(u => u.id));
-        const recentLocal = localAll.filter(item => {
-          if (incomingIds.has(item.id)) return false;
-          if (!item.createdAt) return false;
-          return (Date.now() - new Date(item.createdAt).getTime()) < 30000;
-        });
-        const targetUpdates = [...recentLocal, ...incoming];
-        const newStr = JSON.stringify(targetUpdates);
-        if (localStorage.getItem(STORAGE_KEY) !== newStr) {
-          localStorage.setItem(STORAGE_KEY, newStr);
-          this.notifyChange();
-        }
-      }
-      if (msg.payload && msg.payload.settings) {
-        const newSettingsStr = JSON.stringify(msg.payload.settings);
-        if (localStorage.getItem(SETTINGS_KEY) !== newSettingsStr) {
-          localStorage.setItem(SETTINGS_KEY, newSettingsStr);
-          this.notifyChange();
-        }
-      }
-    } else if (msg.type === 'CONTENT_UPDATED') {
+    if (msg.type === 'SYNC_INIT' || msg.type === 'CONTENT_UPDATED') {
       const auth = this.getAuth();
-      const rawUpdates = auth.isAuthenticated && msg.allUpdates ? msg.allUpdates : (msg.publishedUpdates !== undefined ? msg.publishedUpdates : msg.allUpdates);
+      const rawUpdates = auth.isAuthenticated && msg.allUpdates 
+        ? msg.allUpdates 
+        : (msg.publishedUpdates !== undefined ? msg.publishedUpdates : (msg.updates || msg.payload?.updates || msg.payload?.allUpdates || msg.allUpdates));
+
       if (Array.isArray(rawUpdates)) {
         const localAll = this.getAll();
-        const incomingIds = new Set(rawUpdates.map(u => u.id));
-        const recentLocal = localAll.filter(item => {
-          if (incomingIds.has(item.id)) return false;
-          if (!item.createdAt) return false;
-          return (Date.now() - new Date(item.createdAt).getTime()) < 30000;
-        });
-        const updates = [...recentLocal, ...rawUpdates];
-        const newStr = JSON.stringify(updates);
-        if (localStorage.getItem(STORAGE_KEY) !== newStr) {
-          localStorage.setItem(STORAGE_KEY, newStr);
+        const merged = this.mergeUpdates(localAll, rawUpdates);
+        this.applyUpdates(merged);
+      }
+
+      const settings = msg.settings || msg.payload?.settings;
+      if (settings && settings.siteName) {
+        const currentSettingsStr = localStorage.getItem(SETTINGS_KEY);
+        const newSettingsStr = JSON.stringify(settings);
+        if (currentSettingsStr !== newSettingsStr) {
+          localStorage.setItem(SETTINGS_KEY, newSettingsStr);
           this.notifyChange();
         }
       }
     } else if (msg.type === 'SETTINGS_UPDATED') {
       if (msg.settings) {
+        const currentSettingsStr = localStorage.getItem(SETTINGS_KEY);
         const newSettingsStr = JSON.stringify(msg.settings);
-        if (localStorage.getItem(SETTINGS_KEY) !== newSettingsStr) {
+        if (currentSettingsStr !== newSettingsStr) {
           localStorage.setItem(SETTINGS_KEY, newSettingsStr);
           this.notifyChange();
         }
@@ -525,7 +573,7 @@ export class CMSStore {
         const idx = all.findIndex(a => a.id === msg.payload.updatedArticle.id);
         if (idx !== -1) {
           all[idx].analytics = msg.payload.updatedArticle.analytics;
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+          this.applyUpdates(all);
         }
       }
       this.notifyAnalytics(msg.payload);
@@ -537,6 +585,8 @@ export class CMSStore {
   }
 
   async syncFromServer() {
+    if (this.isSyncing) return;
+    this.isSyncing = true;
     const auth = this.getAuth();
     const token = this.getToken();
     const ts = Date.now();
@@ -545,70 +595,69 @@ export class CMSStore {
       let serverUpdates = null;
 
       if (auth.isAuthenticated && token) {
-        const res = await fetch(`/api/content?_t=${ts}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Cache-Control': 'no-cache'
-          },
-          cache: 'no-store'
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data.updates)) {
-            serverUpdates = data.updates;
+        try {
+          const res = await fetch(`/api/content?_t=${ts}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Cache-Control': 'no-cache'
+            },
+            cache: 'no-store'
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data.updates)) {
+              serverUpdates = data.updates;
+            }
           }
-        }
+        } catch (err) {}
       }
 
       if (!serverUpdates) {
-        const res = await fetch(`/api/public/content?_t=${ts}`, {
-          headers: {
-            'Cache-Control': 'no-cache'
-          },
-          cache: 'no-store'
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data.updates)) {
-            serverUpdates = data.updates;
+        try {
+          const res = await fetch(`/api/public/content?_t=${ts}`, {
+            headers: {
+              'Cache-Control': 'no-cache'
+            },
+            cache: 'no-store'
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data.updates)) {
+              serverUpdates = data.updates;
+            }
           }
-        }
+        } catch (err) {}
       }
 
       if (Array.isArray(serverUpdates)) {
         const localAll = this.getAll();
-        const serverIds = new Set(serverUpdates.map(u => u.id));
-        const recentLocalOnly = localAll.filter(item => {
-          if (serverIds.has(item.id)) return false;
-          if (!item.createdAt) return false;
-          const ageMs = Date.now() - new Date(item.createdAt).getTime();
-          return ageMs < 30000;
-        });
-
-        const mergedUpdates = [...recentLocalOnly, ...serverUpdates];
-        const currentStr = localStorage.getItem(STORAGE_KEY);
-        const newStr = JSON.stringify(mergedUpdates);
-        if (currentStr !== newStr) {
-          localStorage.setItem(STORAGE_KEY, newStr);
-          this.notifyChange();
-        }
+        const merged = this.mergeUpdates(localAll, serverUpdates);
+        this.applyUpdates(merged);
       }
 
       // Sync settings
-      const settingsRes = await fetch(`/api/public/settings?_t=${ts}`, {
-        headers: { 'Cache-Control': 'no-cache' },
-        cache: 'no-store'
-      });
-      if (settingsRes.ok) {
-        const settings = await settingsRes.json();
-        const curSettingsStr = localStorage.getItem(SETTINGS_KEY);
-        const newSettingsStr = JSON.stringify(settings);
-        if (curSettingsStr !== newSettingsStr) {
-          localStorage.setItem(SETTINGS_KEY, newSettingsStr);
-          this.notifyChange();
+      try {
+        const settingsRes = await fetch(`/api/public/settings?_t=${ts}`, {
+          headers: { 'Cache-Control': 'no-cache' },
+          cache: 'no-store'
+        });
+        if (settingsRes.ok) {
+          const serverSettings = await settingsRes.json();
+          if (serverSettings && serverSettings.siteName) {
+            const currentSettingsStr = localStorage.getItem(SETTINGS_KEY);
+            const newSettingsStr = JSON.stringify(serverSettings);
+            if (currentSettingsStr !== newSettingsStr) {
+              localStorage.setItem(SETTINGS_KEY, newSettingsStr);
+              this.notifyChange();
+            }
+          }
         }
-      }
-    } catch (e) {}
+      } catch (err) {}
+    } catch (e) {
+      console.warn('[CMSStore] Sync notice:', e);
+    } finally {
+      this.isSyncing = false;
+    }
   }
 
   // =========================================================================
