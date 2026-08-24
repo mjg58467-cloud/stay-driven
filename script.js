@@ -729,9 +729,17 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
-// Initial render & route check
+// Initial render & immediate server sync
 renderCards();
 handleHashRoute();
+
+// Ensure fresh data is fetched from the server immediately upon initial launch
+if (cmsStore && typeof cmsStore.syncFromServer === 'function') {
+  cmsStore.syncFromServer().then(() => {
+    renderCards();
+    handleHashRoute();
+  }).catch(() => {});
+}
 
 // =========================================================================
 // 4. SECRET ADMIN PORTAL ACCESS

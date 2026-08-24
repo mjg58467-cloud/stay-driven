@@ -1599,8 +1599,8 @@ class AdminController {
     }
 
     // View Mode Toggle (Table / Grid)
-    const viewModeTable = document.getElementById('viewModeTable');
-    const viewModeGrid = document.getElementById('viewModeGrid');
+    const viewModeTable = document.getElementById('viewModeTableBtn') || document.getElementById('viewModeTable');
+    const viewModeGrid = document.getElementById('viewModeGridBtn') || document.getElementById('viewModeGrid');
     const tableCard = document.getElementById('allUpdatesTableCard');
     const gridCard = document.getElementById('allUpdatesGrid');
 

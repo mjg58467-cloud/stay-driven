@@ -296,6 +296,7 @@ const DEFAULT_ABOUT_TEXT = "StayDriven is your intelligence layer for the AI era
 export class CMSStore {
   constructor() {
     this.ws = null;
+    this.eventSource = null;
     this.wsConnected = false;
     this.reconnectTimer = null;
     this.pingTimer = null;
@@ -304,18 +305,19 @@ export class CMSStore {
 
     this.init();
     this.initWebSocket();
+    this.initEventSource();
     this.syncFromServer();
     this.initContinuousSync();
   }
 
   initContinuousSync() {
-    // 1. Periodic background sync every 4 seconds
+    // 1. Periodic background sync every 2.5 seconds (rock-solid fallback across mobile & desktop)
     if (this.pollingTimer) clearInterval(this.pollingTimer);
     this.pollingTimer = setInterval(() => {
       this.syncFromServer();
-    }, 4000);
+    }, 2500);
 
-    // 2. Immediate sync when user switches tabs back or focuses window
+    // 2. Immediate sync when user switches tabs back, focuses window, or recovers connection
     if (typeof window !== 'undefined' && typeof document !== 'undefined') {
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
@@ -327,17 +329,19 @@ export class CMSStore {
         this.syncFromServer();
       });
 
+      window.addEventListener('pageshow', () => {
+        this.syncFromServer();
+      });
+
       window.addEventListener('online', () => {
+        this.initWebSocket();
+        this.initEventSource();
         this.syncFromServer();
       });
     }
   }
 
   init() {
-    if (!localStorage.getItem(STORAGE_KEY)) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_UPDATES));
-    }
-
     if (!localStorage.getItem(AUTH_KEY)) {
       localStorage.setItem(AUTH_KEY, JSON.stringify({
         isAuthenticated: false,
@@ -357,7 +361,7 @@ export class CMSStore {
       }));
     }
 
-    // Initialize Site Analytics with real baseline (0 counters)
+    // Initialize Site Analytics with clean real baseline (0 counters)
     const today = new Date().toISOString().split('T')[0];
     const existingRaw = localStorage.getItem(ANALYTICS_KEY);
     let parsedAnalytics = null;
@@ -365,7 +369,6 @@ export class CMSStore {
       parsedAnalytics = existingRaw ? JSON.parse(existingRaw) : null;
     } catch (e) {}
 
-    // If no analytics or if containing legacy hardcoded demo numbers (> 5000 views), sanitize to real clean 0
     if (!parsedAnalytics || parsedAnalytics.totalPageViews > 5000) {
       const cleanAnalytics = {
         totalPageViews: 0,
@@ -410,20 +413,19 @@ export class CMSStore {
           if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             this.ws.send(JSON.stringify({ type: 'PING' }));
           }
-        }, 25000);
+        }, 20000);
       };
 
       this.ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
-          this.handleWebSocketMessage(msg);
+          this.handleIncomingSync(msg);
         } catch (e) {}
       };
 
       this.ws.onclose = () => {
         this.wsConnected = false;
         if (this.pingTimer) clearInterval(this.pingTimer);
-        // Auto-reconnect with exponential backoff
         clearTimeout(this.reconnectTimer);
         this.reconnectTimer = setTimeout(() => {
           this.initWebSocket();
@@ -438,33 +440,65 @@ export class CMSStore {
     }
   }
 
-  handleWebSocketMessage(msg) {
+  // =========================================================================
+  // REAL-TIME SERVER-SENT EVENTS (SSE) SYNCHRONIZATION
+  // =========================================================================
+  initEventSource() {
+    if (typeof EventSource === 'undefined') return;
+    try {
+      if (this.eventSource) {
+        this.eventSource.close();
+      }
+      this.eventSource = new EventSource('/api/events');
+      this.eventSource.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          this.handleIncomingSync(msg);
+        } catch (e) {}
+      };
+      this.eventSource.onerror = () => {
+        // EventSource automatically retries connections
+      };
+    } catch (e) {}
+  }
+
+  handleIncomingSync(msg) {
     if (!msg || !msg.type) return;
 
     if (msg.type === 'SYNC_INIT') {
       if (msg.payload && Array.isArray(msg.payload.updates)) {
-        // If we are unauthenticated or on public site, sync published
         const auth = this.getAuth();
-        if (!auth.isAuthenticated) {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(msg.payload.updates));
+        const targetUpdates = auth.isAuthenticated && msg.payload.allUpdates ? msg.payload.allUpdates : msg.payload.updates;
+        const newStr = JSON.stringify(targetUpdates);
+        if (localStorage.getItem(STORAGE_KEY) !== newStr) {
+          localStorage.setItem(STORAGE_KEY, newStr);
           this.notifyChange();
         }
       }
       if (msg.payload && msg.payload.settings) {
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify(msg.payload.settings));
-        this.notifyChange();
+        const newSettingsStr = JSON.stringify(msg.payload.settings);
+        if (localStorage.getItem(SETTINGS_KEY) !== newSettingsStr) {
+          localStorage.setItem(SETTINGS_KEY, newSettingsStr);
+          this.notifyChange();
+        }
       }
     } else if (msg.type === 'CONTENT_UPDATED') {
       const auth = this.getAuth();
-      const updates = auth.isAuthenticated && msg.allUpdates ? msg.allUpdates : (msg.publishedUpdates || msg.allUpdates);
+      const updates = auth.isAuthenticated && msg.allUpdates ? msg.allUpdates : (msg.publishedUpdates !== undefined ? msg.publishedUpdates : msg.allUpdates);
       if (Array.isArray(updates)) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updates));
+        const newStr = JSON.stringify(updates);
+        if (localStorage.getItem(STORAGE_KEY) !== newStr) {
+          localStorage.setItem(STORAGE_KEY, newStr);
+          this.notifyChange();
+        }
       }
-      this.notifyChange();
     } else if (msg.type === 'SETTINGS_UPDATED') {
       if (msg.settings) {
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify(msg.settings));
-        this.notifyChange();
+        const newSettingsStr = JSON.stringify(msg.settings);
+        if (localStorage.getItem(SETTINGS_KEY) !== newSettingsStr) {
+          localStorage.setItem(SETTINGS_KEY, newSettingsStr);
+          this.notifyChange();
+        }
       }
     } else if (msg.type === 'ANALYTICS_EVENT') {
       if (msg.payload && msg.payload.analytics) {
@@ -482,39 +516,68 @@ export class CMSStore {
     }
   }
 
+  handleWebSocketMessage(msg) {
+    this.handleIncomingSync(msg);
+  }
+
   async syncFromServer() {
     const auth = this.getAuth();
     const token = this.getToken();
+    const ts = Date.now();
 
     try {
       if (auth.isAuthenticated && token) {
-        const res = await fetch('/api/content', {
-          headers: { 'Authorization': `Bearer ${token}` }
+        const res = await fetch(`/api/content?_t=${ts}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Cache-Control': 'no-cache'
+          },
+          cache: 'no-store'
         });
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data.updates)) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data.updates));
-            this.notifyChange();
+            const currentStr = localStorage.getItem(STORAGE_KEY);
+            const newStr = JSON.stringify(data.updates);
+            if (currentStr !== newStr) {
+              localStorage.setItem(STORAGE_KEY, newStr);
+              this.notifyChange();
+            }
           }
         }
       } else {
-        const res = await fetch('/api/public/content');
+        const res = await fetch(`/api/public/content?_t=${ts}`, {
+          headers: {
+            'Cache-Control': 'no-cache'
+          },
+          cache: 'no-store'
+        });
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data.updates)) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data.updates));
-            this.notifyChange();
+            const currentStr = localStorage.getItem(STORAGE_KEY);
+            const newStr = JSON.stringify(data.updates);
+            if (currentStr !== newStr) {
+              localStorage.setItem(STORAGE_KEY, newStr);
+              this.notifyChange();
+            }
           }
         }
       }
 
       // Sync settings
-      const settingsRes = await fetch('/api/public/settings');
+      const settingsRes = await fetch(`/api/public/settings?_t=${ts}`, {
+        headers: { 'Cache-Control': 'no-cache' },
+        cache: 'no-store'
+      });
       if (settingsRes.ok) {
         const settings = await settingsRes.json();
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-        this.notifyChange();
+        const curSettingsStr = localStorage.getItem(SETTINGS_KEY);
+        const newSettingsStr = JSON.stringify(settings);
+        if (curSettingsStr !== newSettingsStr) {
+          localStorage.setItem(SETTINGS_KEY, newSettingsStr);
+          this.notifyChange();
+        }
       }
     } catch (e) {}
   }
@@ -741,9 +804,12 @@ export class CMSStore {
   getAll() {
     try {
       const data = localStorage.getItem(STORAGE_KEY);
-      return data ? JSON.parse(data) : INITIAL_UPDATES;
+      if (data !== null) {
+        return JSON.parse(data);
+      }
+      return [];
     } catch (e) {
-      return INITIAL_UPDATES;
+      return [];
     }
   }
 
@@ -795,11 +861,21 @@ export class CMSStore {
 
       // Server Sync
       if (token) {
-        fetch(`/api/content/${updateData.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify(resultItem)
-        }).catch(() => {});
+        try {
+          const res = await fetch(`/api/content/${updateData.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify(resultItem)
+          });
+          if (res.ok) {
+            const resData = await res.json();
+            if (resData.update) {
+              resultItem = resData.update;
+            }
+          }
+        } catch (e) {
+          console.warn('[CMSStore] Server PUT failed, kept local copy:', e);
+        }
       }
     } else {
       const newId = `upd-${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 4)}`;
@@ -816,11 +892,21 @@ export class CMSStore {
 
       // Server Sync
       if (token) {
-        fetch('/api/content', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify(newItem)
-        }).catch(() => {});
+        try {
+          const res = await fetch('/api/content', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify(newItem)
+          });
+          if (res.ok) {
+            const resData = await res.json();
+            if (resData.update) {
+              resultItem = resData.update;
+            }
+          }
+        } catch (e) {
+          console.warn('[CMSStore] Server POST failed, kept local copy:', e);
+        }
       }
     }
 
@@ -836,10 +922,14 @@ export class CMSStore {
 
     const token = this.getToken();
     if (token) {
-      fetch(`/api/content/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      }).catch(() => {});
+      try {
+        await fetch(`/api/content/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      } catch (e) {
+        console.warn('[CMSStore] Server DELETE failed:', e);
+      }
     }
     return true;
   }
@@ -856,11 +946,15 @@ export class CMSStore {
 
     const token = this.getToken();
     if (token) {
-      fetch('/api/content/bulk', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ ids, action: 'status', status })
-      }).catch(() => {});
+      try {
+        await fetch('/api/content/bulk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ ids, action: 'status', status })
+        });
+      } catch (e) {
+        console.warn('[CMSStore] Server bulk status update failed:', e);
+      }
     }
   }
 
@@ -871,11 +965,15 @@ export class CMSStore {
 
     const token = this.getToken();
     if (token) {
-      fetch('/api/content/bulk', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ ids, action: 'delete' })
-      }).catch(() => {});
+      try {
+        await fetch('/api/content/bulk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ ids, action: 'delete' })
+        });
+      } catch (e) {
+        console.warn('[CMSStore] Server bulk delete failed:', e);
+      }
     }
   }
 

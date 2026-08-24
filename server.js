@@ -78,11 +78,11 @@ function loadDatabase() {
         sessions: { ...db.sessions, ...(parsed.sessions || {}) },
         settings: { ...db.settings, ...(parsed.settings || {}) },
         analytics: { ...db.analytics, ...(parsed.analytics || {}) },
-        updates: Array.isArray(parsed.updates) && parsed.updates.length > 0 ? parsed.updates : []
+        updates: Array.isArray(parsed.updates) ? parsed.updates : []
       };
 
-      if (!Array.isArray(db.updates) || db.updates.length === 0) {
-        console.log(`[DB] Updates empty in store file. Seeding initial data...`);
+      if (!Array.isArray(parsed.updates)) {
+        console.log(`[DB] Updates key missing in store file. Seeding initial data...`);
         seedInitialData();
         saveDatabase();
       } else {
@@ -420,26 +420,42 @@ function seedInitialData() {
 // Load database on startup
 loadDatabase();
 
-// WebSocket Real-Time Broadcast Server
+// Server-Sent Events (SSE) Client Pool for robust proxy/mobile real-time push
+const sseClients = new Set();
+
+// Universal Real-Time Broadcast to all WebSocket and SSE connected clients
 function broadcast(messageObj) {
-  const data = JSON.stringify(messageObj);
+  const dataStr = JSON.stringify(messageObj);
+
+  // 1. Broadcast to WebSockets
   wss.clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
       try {
-        client.send(data);
+        client.send(dataStr);
       } catch (err) {
         console.error('[WS] Send error:', err);
       }
     }
   });
+
+  // 2. Broadcast to Server-Sent Events (SSE)
+  const sseChunk = `data: ${dataStr}\n\n`;
+  sseClients.forEach(client => {
+    try {
+      client.res.write(sseChunk);
+    } catch (err) {
+      sseClients.delete(client);
+    }
+  });
 }
 
 wss.on('connection', (ws, req) => {
-  // Send initial connected handshake
+  // Send initial connected handshake with latest state
   ws.send(JSON.stringify({
     type: 'SYNC_INIT',
     payload: {
       updates: db.updates.filter(u => u.status === 'published'),
+      allUpdates: db.updates,
       settings: db.settings,
       timestamp: new Date().toISOString()
     }
@@ -459,9 +475,8 @@ wss.on('connection', (ws, req) => {
 
 // Middleware
 app.use(express.json({ limit: '10mb' }));
-app.use(express.static(__dirname));
 
-// Cache-busting middleware for all API endpoints to guarantee instant updates across devices
+// 1. Strict Cache-Busting Middleware for all API endpoints to guarantee instant updates across all devices
 app.use('/api', (req, res, next) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.set('Pragma', 'no-cache');
@@ -469,6 +484,48 @@ app.use('/api', (req, res, next) => {
   res.set('Surrogate-Control', 'no-store');
   next();
 });
+
+// 2. SSE Real-Time Event Stream Endpoint
+app.get('/api/events', (req, res) => {
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no',
+    'Access-Control-Allow-Origin': '*'
+  });
+
+  // Send initial sync event immediately upon connection
+  res.write(`data: ${JSON.stringify({
+    type: 'SYNC_INIT',
+    payload: {
+      updates: db.updates.filter(u => u.status === 'published'),
+      allUpdates: db.updates,
+      settings: db.settings,
+      timestamp: new Date().toISOString()
+    }
+  })}\n\n`);
+
+  const client = { res };
+  sseClients.add(client);
+
+  req.on('close', () => {
+    sseClients.delete(client);
+  });
+});
+
+// 3. Static Assets with Cache Controls
+app.use(express.static(__dirname, {
+  etag: false,
+  maxAge: 0,
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html') || filePath.endsWith('.js') || filePath.endsWith('.json')) {
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+    }
+  }
+}));
 
 // Security & Authentication Helper
 function generateToken() {
