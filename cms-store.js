@@ -480,8 +480,12 @@ export class CMSStore {
 
   setServerUpdates(updates) {
     if (!Array.isArray(updates)) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updates));
-    this.notifyChange();
+    const currentStr = localStorage.getItem(STORAGE_KEY) || '[]';
+    const nextStr = JSON.stringify(updates);
+    if (currentStr !== nextStr) {
+      localStorage.setItem(STORAGE_KEY, nextStr);
+      this.notifyChange();
+    }
   }
 
   async syncFromServer() {
@@ -513,8 +517,12 @@ export class CMSStore {
       const settingsRes = await fetch('/api/public/settings');
       if (settingsRes.ok) {
         const settings = await settingsRes.json();
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-        this.notifyChange();
+        const currentSettingsStr = localStorage.getItem(SETTINGS_KEY) || '{}';
+        const nextSettingsStr = JSON.stringify(settings);
+        if (currentSettingsStr !== nextSettingsStr) {
+          localStorage.setItem(SETTINGS_KEY, nextSettingsStr);
+          this.notifyChange();
+        }
       }
     } catch (e) {}
   }
