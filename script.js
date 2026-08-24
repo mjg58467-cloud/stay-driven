@@ -1,10 +1,6 @@
 // StayDriven Public Site JavaScript & Silent Analytics Engine
 import { cmsStore, CMSStore } from './cms-store.js';
 
-// Global WhatsApp Community URL Constant - Single line swap to update across entire site
-export const WHATSAPP_COMMUNITY_URL = "https://chat.whatsapp.com/REPLACE_ME";
-window.WHATSAPP_COMMUNITY_URL = WHATSAPP_COMMUNITY_URL;
-
 const grid = document.querySelector("[data-card-grid]");
 const searchInput = document.querySelector("[data-search]");
 const filterButtons = document.querySelectorAll("[data-filter]");
@@ -89,13 +85,6 @@ const Tracker = {
     this.trackEvent('article_view', { articleId, slug, isUnique });
   },
 
-  trackWhatsAppClick(location, articleId = null) {
-    this.trackEvent('whatsapp_click', {
-      location: location || 'unknown',
-      articleId: articleId || currentOpenArticleId || null
-    });
-  },
-
   trackPdfInteraction(articleId, pdfLabel, action = 'open_drive_click') {
     this.trackEvent('pdf_interaction', {
       articleId: articleId || currentOpenArticleId || null,
@@ -114,30 +103,6 @@ const Tracker = {
 };
 
 window.Tracker = Tracker;
-
-// Ensure all static WhatsApp buttons on page point to constant and have click tracking
-function wireWhatsAppLinks() {
-  document.querySelectorAll("[data-whatsapp-link]").forEach((link) => {
-    link.setAttribute("href", WHATSAPP_COMMUNITY_URL);
-    link.setAttribute("target", "_blank");
-    link.setAttribute("rel", "noopener noreferrer");
-
-    if (!link.dataset.tracked) {
-      link.dataset.tracked = "true";
-      link.addEventListener("click", () => {
-        let location = "other";
-        if (link.closest(".navbar")) location = "navbar";
-        else if (link.closest(".hero")) location = "hero";
-        else if (link.closest(".footer-cta-card") || link.closest(".site-footer")) location = "footer";
-        else if (link.closest(".sticky-bar")) location = "sticky_bar";
-        else if (link.closest(".sidebar-widget-card")) location = "sidebar_about";
-        else if (link.closest(".public-modal-dialog")) location = "article_modal";
-
-        Tracker.trackWhatsAppClick(location, currentOpenArticleId);
-      });
-    }
-  });
-}
 
 // =========================================================================
 // 1. CARD GRID RENDERING (Real Photography & High-Hierarchy Cards)
@@ -444,14 +409,8 @@ function openPublicArticle(id, updateHash = false) {
               <div class="byline-share-btns">
                 <button type="button" class="share-btn-pill copy-article-link-btn" title="Copy article link">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                  Copy Link
+                  Copy Article Link
                 </button>
-                <a href="https://twitter.com/intent/tweet?text=${encodeURIComponent(item.title)}&url=${encodeURIComponent(shareUrl)}" target="_blank" rel="noopener noreferrer" class="share-btn-pill" title="Share on X">
-                  X
-                </a>
-                <a href="https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}" target="_blank" rel="noopener noreferrer" class="share-btn-pill" title="Share on LinkedIn">
-                  in
-                </a>
               </div>
             </div>
 
@@ -489,11 +448,8 @@ function openPublicArticle(id, updateHash = false) {
               <div class="byline-share-btns">
                 <button type="button" class="share-btn-pill copy-article-link-btn">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                  Copy Link
+                  Copy Article Link
                 </button>
-                <a href="https://twitter.com/intent/tweet?text=${encodeURIComponent(item.title)}&url=${encodeURIComponent(shareUrl)}" target="_blank" rel="noopener noreferrer" class="share-btn-pill">
-                  Share on X
-                </a>
               </div>
             </div>
           </article>
@@ -540,10 +496,6 @@ function openPublicArticle(id, updateHash = false) {
               <div class="sidebar-about-text" style="display: flex; flex-direction: column; gap: 8px;">
                 ${aboutText.split('\n\n').map(para => `<p style="margin: 0;">${escapeHtml(para)}</p>`).join('')}
               </div>
-              <a href="${WHATSAPP_COMMUNITY_URL}" target="_blank" rel="noopener noreferrer" class="sidebar-join-btn" data-whatsapp-link>
-                <span>Join WhatsApp Community</span>
-                <span>→</span>
-              </a>
             </div>
 
             <!-- Widget 3: More Updates -->
@@ -777,8 +729,7 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
-// Wire links, initial render & route check
-wireWhatsAppLinks();
+// Initial render & route check
 renderCards();
 handleHashRoute();
 

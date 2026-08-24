@@ -8,6 +8,7 @@
       name="description"
       content="Browse the full archive of StayDriven AI briefs, prompts, slides, and community resources."
     >
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="apple-touch-icon" href="/favicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,11 +20,11 @@
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
-    <!-- Site Header: Logo Left, Single WhatsApp Community CTA Right -->
+    <!-- Site Header: Logo Left, Browse Dispatches Right -->
     <header class="site-header">
       <nav class="nav-shell" aria-label="Primary navigation">
         <a class="brand" href="#" aria-label="StayDriven home">
-          <img src="/src/assets/logo.png" alt="StayDriven Emblem" class="brand-logo-img" width="36" height="36">
+          <img src="/src/assets/logo.svg" alt="StayDriven SD Logo" class="brand-logo-img" width="38" height="38">
           <span class="brand-word">
             <span>stay</span>
             <span>driven</span>
@@ -31,21 +32,15 @@
         </a>
 
         <div class="nav-actions">
-          <a
-            class="btn btn-light nav-whatsapp-btn"
-            href="https://chat.whatsapp.com/REPLACE_ME"
-            target="_blank"
-            rel="noopener noreferrer"
-            data-whatsapp-link
-          >
-            Join Our WhatsApp Community
+          <a class="btn btn-outline" href="#resources">
+            Browse Archive
           </a>
         </div>
       </nav>
     </header>
 
     <main>
-      <!-- Hero Section: Updated Headline, Subtext, Single WhatsApp CTA, Male Hero Visual Illustration -->
+      <!-- Hero Section: Headline, Subtext, Archive Action, Hero Visual -->
       <section class="hero-section" aria-labelledby="hero-title">
         <div class="container">
           <div class="hero-card">
@@ -56,14 +51,8 @@
               </p>
               
               <div class="hero-cta-wrap">
-                <a
-                  class="btn btn-light hero-whatsapp-btn"
-                  href="https://chat.whatsapp.com/REPLACE_ME"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  data-whatsapp-link
-                >
-                  Join Our WhatsApp Community
+                <a class="btn btn-light hero-browse-btn" href="#resources">
+                  Explore Dispatches
                 </a>
               </div>
             </div>
@@ -111,28 +100,22 @@
         </div>
       </section>
 
-      <!-- Atmospheric Ambient Footer Section (Clean Layout without Social Links / Redundant Logo) -->
+      <!-- Atmospheric Ambient Footer Section -->
       <section class="footer-atmosphere-section" id="join" aria-labelledby="footer-cta-title">
         <div class="footer-atmosphere-glow" aria-hidden="true"></div>
         <div class="footer-grid-overlay" aria-hidden="true"></div>
         
         <div class="container footer-atmosphere-inner">
           <div class="footer-main-centered">
-            <!-- Central Headline & CTA Content -->
+            <!-- Central Headline & Archive Action -->
             <div class="footer-cta-col">
               <h2 id="footer-cta-title" class="footer-atmosphere-title">The next year of AI will not wait</h2>
               <p class="footer-atmosphere-desc">
-                Get instant access to weekly briefings, tactical workflows, and community playbooks.
+                Practical insights, tactical workflows, and community playbooks to understand AI, apply it, and stay ahead.
               </p>
               <div class="footer-atmosphere-actions">
-                <a
-                  class="btn btn-light footer-atmosphere-whatsapp-btn"
-                  href="https://chat.whatsapp.com/REPLACE_ME"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  data-whatsapp-link
-                >
-                  Join Our WhatsApp Community
+                <a class="btn btn-light" href="#resources">
+                  Browse All Dispatches
                 </a>
               </div>
             </div>
@@ -146,25 +129,6 @@
         </div>
       </section>
     </main>
-
-    <!-- Sticky Bottom WhatsApp Bar -->
-    <aside class="sticky-join" aria-label="Join StayDriven">
-      <div class="sticky-join-copy">
-        <strong>Join the StayDriven community</strong>
-        <span>Free · WhatsApp community · Weekly dispatches</span>
-      </div>
-      <div class="sticky-join-action">
-        <a
-          class="btn btn-light sticky-whatsapp-btn"
-          href="https://chat.whatsapp.com/REPLACE_ME"
-          target="_blank"
-          rel="noopener noreferrer"
-          data-whatsapp-link
-        >
-          Join Our WhatsApp Community
-        </a>
-      </div>
-    </aside>
 
     <!-- Public Article Reader Modal -->
     <div class="public-modal-backdrop" id="publicArticleModal" style="display: none;"></div>

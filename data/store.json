@@ -1,0 +1,106 @@
+{
+  "adminAuth": {
+    "email": "admin@staydriven.community",
+    "passwordHash": "27e1334cbfa5a5c17515910e882a2ea83ebdbf263da1f72102345bed146b3ac0",
+    "name": "StayDriven Admin",
+    "role": "Lead Editor & Admin",
+    "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200&q=80"
+  },
+  "sessions": {
+    "2d34870a7ad255d794a1e55ab853631fd502b328db898630818394461fe2dbd5": {
+      "user": {
+        "email": "admin@staydriven.community",
+        "name": "StayDriven Admin",
+        "role": "Lead Editor & Admin",
+        "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200&q=80"
+      },
+      "createdAt": 1787567375732,
+      "lastSeen": 1787567502586
+    },
+    "6134008a4be513c0bfd33e65ca645f0c33e584ae1f36a5d8d0a2f059dde1ab3c": {
+      "user": {
+        "email": "admin@staydriven.community",
+        "name": "StayDriven Admin",
+        "role": "Lead Editor & Admin",
+        "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200&q=80"
+      },
+      "createdAt": 1787568197888,
+      "lastSeen": 1787568350964
+    }
+  },
+  "settings": {
+    "siteName": "StayDriven",
+    "adminName": "StayDriven Admin",
+    "adminRole": "Lead Editor & Admin",
+    "adminAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200&q=80",
+    "aboutStayingAheadText": "StayDriven is your intelligence layer for the AI era.\n\nA community and weekly briefing platform delivering practical insights on Daily AI and Tech Updates, Resources, and Roadmaps — built for people who want to understand AI, apply it, and stay ahead."
+  },
+  "updates": [
+    {
+      "id": "upd-mt73yv88-ejbj",
+      "tag": "AI TOOL",
+      "date": "24th Aug, 2026",
+      "title": "Free vs Paid AI Tool",
+      "excerpt": "abc",
+      "authorName": "StayDriven Admin",
+      "authorAvatarUrl": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200&q=80",
+      "slug": "free-vs-paid-ai-tool",
+      "status": "published",
+      "contentType": "article",
+      "thumbnailUrl": "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1200&q=80",
+      "article": {
+        "sectionTitle": "Free vs Paid AI Tool",
+        "sectionSubtitle": "abc",
+        "stories": [
+          {
+            "number": 1,
+            "heading": "Story 1",
+            "paragraphs": [
+              {
+                "label": "What changes.",
+                "text": ""
+              },
+              {
+                "label": "Why it matters.",
+                "text": ""
+              }
+            ]
+          }
+        ],
+        "broaderContext": ""
+      },
+      "pdfs": [],
+      "resourceLinks": [],
+      "analytics": {
+        "viewCount": 0,
+        "uniqueViewCount": 0,
+        "whatsappClickCount": 0,
+        "pdfOpenCounts": {},
+        "resourceLinkClicks": {},
+        "lastViewedAt": null,
+        "referrers": {}
+      },
+      "createdAt": "2026-08-24T10:43:45.812Z",
+      "updatedAt": "2026-08-24T10:45:50.964Z"
+    }
+  ],
+  "analytics": {
+    "totalPageViews": 0,
+    "totalUniqueVisitors": 0,
+    "totalWhatsappClicks": 0,
+    "whatsappClicksByLocation": {
+      "navbar": 0,
+      "hero": 0,
+      "footer": 0,
+      "sticky_bar": 0,
+      "sidebar_about": 0,
+      "article_modal": 0
+    },
+    "todayViews": 0,
+    "lastTodayDate": "2026-08-24",
+    "dailyViews": {},
+    "dailyWhatsappClicks": {},
+    "dailyUniqueVisitors": {},
+    "recentEvents": []
+  }
+}
